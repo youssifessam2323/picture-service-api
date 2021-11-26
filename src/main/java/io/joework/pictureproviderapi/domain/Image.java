@@ -24,6 +24,22 @@ public class Image {
     private  byte[] attachement;
 
 
-    @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
+
+
+
+    @Override
+    public boolean equals(Object obj){
+        if(this == obj) return true;    
+
+        if(!(obj instanceof Image)) return false;
+
+        return id != null && id.equals(((Image)obj).getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
