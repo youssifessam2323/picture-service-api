@@ -32,6 +32,11 @@ public class JwtTokenFilter extends OncePerRequestFilter{
         
         String header = request.getHeader(AUTHORIZATION_HEADER);
 
+        if(header == null ) {
+            chain.doFilter(request,response);
+            return ;
+        }
+
         if(header.isEmpty() || !header.startsWith("Bearer ")){
             chain.doFilter(request, response);  
             return;
@@ -44,7 +49,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
                         .orElseThrow(() -> new UsernameNotFoundException("invalid data from the token"));
 
         UsernamePasswordAuthenticationToken authentication =
-                     new UsernamePasswordAuthenticationToken(user, null);
+                     new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 
         authentication.setDetails(new WebAuthenticationDetails(request));
 

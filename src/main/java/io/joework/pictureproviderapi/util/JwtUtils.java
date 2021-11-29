@@ -4,19 +4,17 @@ import java.security.Key;
 import java.sql.Date;
 import java.time.LocalDate;
 
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties.Jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.joework.pictureproviderapi.domain.User;
 
 public class JwtUtils {
-   
-
+ 
     public static String generateToken(User user){
         
         return Jwts.builder()
-            .setSubject(String.format("%s, %s", user.getId(),user.getUsername()))
+            .setSubject(String.format("%s, %s, %s", user.getId(),user.getUsername(), user.getRole().name()))
             .setIssuedAt(Date.valueOf(LocalDate.now()))
             .setIssuer(JwtConfig.jwtIssuer)
             .setExpiration(new Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000)) // one week
@@ -26,14 +24,7 @@ public class JwtUtils {
 
 
     public static Long getUserId(String token){
-
-        Claims claims = Jwts.parserBuilder()
-                            .setSigningKey(JwtConfig.key)
-                            .build()
-                            .parseClaimsJws(token)
-                            .getBody();
-
-        return Long.valueOf(claims.getSubject().split(",")[0]);
+        return  Long.valueOf(builderMethod(JwtConfig.key, token,0));
     }
 
 
@@ -46,12 +37,21 @@ public class JwtUtils {
     }
 
 
-    public static String getUsername(String token) { 
-        return Jwts.parserBuilder()   
-                    .setSigningKey(JwtConfig.key)
+    public static String getRole(String token){
+        return builderMethod(JwtConfig.key, token,2);
+    }
+
+    private static String builderMethod(Key key, String token, int index){
+        return Jwts.parserBuilder()
+                    .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
-                    .getBody().getSubject().split(",")[1].trim();
+                    .getBody()
+                    .getSubject().split(",")[index];
+    }
+
+    public static String getUsername(String token) { 
+        return builderMethod(JwtConfig.key, token,1);
     }
 
 
@@ -61,9 +61,7 @@ public class JwtUtils {
             return true;
         }catch(SignatureException e){
             System.out.println("Invalid JWT Signature " + e.getMessage());
-        }
-        
-        catch(MalformedJwtException e){
+        }catch(MalformedJwtException e){
             System.out.println("Invalid JWT signature - " + e.getMessage());
         }catch(ExpiredJwtException e){
             System.out.println("Expired JWT signature - " + e.getMessage());

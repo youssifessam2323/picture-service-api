@@ -1,10 +1,10 @@
 package io.joework.pictureproviderapi.security;
 
-import javax.servlet.Filter;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -21,9 +21,11 @@ import org.springframework.web.filter.CorsFilter;
 import io.joework.pictureproviderapi.filter.JwtTokenFilter;
 import io.joework.pictureproviderapi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig extends WebSecurityConfigurerAdapter{
     
     private final UserRepository userRepository;
@@ -31,22 +33,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http = http.csrf().disable();
+        http = http.cors().and().csrf().disable();
 
         http = http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and();
 
         http = http.exceptionHandling()
         .authenticationEntryPoint((req, res,ex) -> {
+            log.info("in the authentication exception Handling method");
             res.sendError(HttpServletResponse.SC_UNAUTHORIZED,
             ex.getMessage());
         })
         .and();
 
         http.authorizeRequests()
-            .antMatchers("/api/auth/**").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/images").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/admin/**").hasRole("ADMIN")
+            // .antMatchers("/").permitAll()
+            .antMatchers("/auth/signup").permitAll()
+            .antMatchers(HttpMethod.GET, "/images").permitAll()
+            .antMatchers(HttpMethod.GET, "/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated();
 
         http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
@@ -69,6 +73,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
 
     @Bean
     public CorsFilter corsFilter() {
