@@ -19,11 +19,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import lombok.Data;
-
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 @Data
 @Entity
 @Table(indexes = {@Index(name ="username_idx", columnList = "username", unique = true)})
+@NoArgsConstructor
+@ToString
 public class User implements UserDetails{
     
     @Id
@@ -90,4 +94,6 @@ public class User implements UserDetails{
         // TODO Auto-generated method stub
         return true;
     }
+
+ 
 }

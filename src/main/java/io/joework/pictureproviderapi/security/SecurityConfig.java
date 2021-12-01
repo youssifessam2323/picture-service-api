@@ -48,7 +48,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 
         http.authorizeRequests()
             // .antMatchers("/").permitAll()
-            .antMatchers("/auth/signup").permitAll()
+            .antMatchers("/auth/*").permitAll()
             .antMatchers(HttpMethod.GET, "/images").permitAll()
             .antMatchers(HttpMethod.GET, "/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated();

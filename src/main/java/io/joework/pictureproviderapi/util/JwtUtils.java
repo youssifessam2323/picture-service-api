@@ -3,34 +3,36 @@ package io.joework.pictureproviderapi.util;
 import java.security.Key;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.Base64;
 
+import javax.crypto.SecretKey;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import io.joework.pictureproviderapi.domain.User;
 
 public class JwtUtils {
  
     public static String generateToken(User user){
-        
         return Jwts.builder()
             .setSubject(String.format("%s, %s, %s", user.getId(),user.getUsername(), user.getRole().name()))
             .setIssuedAt(Date.valueOf(LocalDate.now()))
             .setIssuer(JwtConfig.jwtIssuer)
             .setExpiration(new Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000)) // one week
-            .signWith(JwtConfig.key)
+            .signWith(JwtConfig.key(), JwtConfig.SIGNATURE_ALGORITHM)
             .compact();            
     }
 
 
     public static Long getUserId(String token){
-        return  Long.valueOf(builderMethod(JwtConfig.key, token,0));
+        return  Long.valueOf(builderMethod(JwtConfig.key(), token,0));
     }
 
 
     public static Date getExpirationDate(String token){
         return new Date(Jwts.parserBuilder()
-                    .setSigningKey(JwtConfig.key)
+                    .setSigningKey(JwtConfig.key())
                     .build()
                     .parseClaimsJws(token)
                     .getBody().getExpiration().getTime());
@@ -38,26 +40,26 @@ public class JwtUtils {
 
 
     public static String getRole(String token){
-        return builderMethod(JwtConfig.key, token,2);
+        return builderMethod(JwtConfig.key(), token,2);
     }
 
     private static String builderMethod(Key key, String token, int index){
         return Jwts.parserBuilder()
-                    .setSigningKey(key)
+                    .setSigningKey(JwtConfig.SECRET)
                     .build()
                     .parseClaimsJws(token)
                     .getBody()
-                    .getSubject().split(",")[index];
+                    .getSubject().split(",")[index].trim();
     }
 
     public static String getUsername(String token) { 
-        return builderMethod(JwtConfig.key, token,1);
+        return builderMethod(JwtConfig.key(), token,1);
     }
 
 
     public boolean validate(String token){
         try{
-            Jwts.parserBuilder().setSigningKey(JwtConfig.key).build().parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(JwtConfig.key()).build().parseClaimsJws(token);
             return true;
         }catch(SignatureException e){
             System.out.println("Invalid JWT Signature " + e.getMessage());
@@ -76,7 +78,13 @@ public class JwtUtils {
     
     static class JwtConfig { 
         private static final String jwtIssuer = "io.joework";
-        private static final String jwtSecret = "zdtlD3JK56m6wTTgsNFhqzjqP";
-        private static Key key =  Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        private static final String SECRET = "5s2BCxpNxdI58mAaAllBr/psyu91aCusvXy+kew9ytxQ/zhRtvcZMxVAjmkq8pVkSMA81+9Y0D4W06qGre+hYg==";
+        private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
+
+        static SecretKey key() {
+            var res =  Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET));
+            System.out.println("res after decoding the secret = " + res.getEncoded());
+            return res; 
+        }
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -53,4 +54,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.badRequest().body(errorResponse);
     }
     
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<?> handleBadCredentialException(BadCredentialsException e, WebRequest request){
+        log.info("Bad Cred is occured... ");
+
+        ErrorResponse er = new ErrorResponse(HttpStatus.UNAUTHORIZED, e.getLocalizedMessage());
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(er);
+        }
 }
